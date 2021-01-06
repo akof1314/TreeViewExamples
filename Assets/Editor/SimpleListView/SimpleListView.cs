@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
@@ -116,7 +116,10 @@ namespace UnityEditor.WuHuan
                 {
                     rectSearch.width -= 20;
                 }
-                m_TreeView.searchString = m_SearchField.OnToolbarGUI(rectSearch, m_TreeView.searchString);
+                if (showSearchField)
+                {
+                    m_TreeView.searchString = m_SearchField.OnToolbarGUI(rectSearch, m_TreeView.searchString);
+                }
 
                 rectSearch.xMin = rectSearch.xMax + 2;
                 rectSearch.width = 20;
@@ -137,7 +140,7 @@ namespace UnityEditor.WuHuan
                         if (count != items.Count)
                         {
                             EndUpdate();
-                            m_TreeView.SetSelection(new[] { items.Count - 1 }, TreeViewSelectionOptions.RevealAndFrame);
+                            m_TreeView.SetSelection(new[] { items.Count - 1 }, TreeViewSelectionOptions.RevealAndFrame | TreeViewSelectionOptions.FireSelectionChanged);
                         }
                     }
                     rectSearch.xMin = rectSearch.xMax - 2;
@@ -167,7 +170,7 @@ namespace UnityEditor.WuHuan
 
                             if (count != items.Count)
                             {
-                                m_TreeView.SetSelection(new List<int>());
+                                m_TreeView.SetSelection(new List<int>(), TreeViewSelectionOptions.FireSelectionChanged);
                                 EndUpdate();
                             }
                         }
@@ -247,14 +250,24 @@ namespace UnityEditor.WuHuan
         {
             var root = new TreeViewItem { id = -1, depth = -1, displayName = "Root" };
 
-            for (var i = 0; i < m_ListView.items.Count; i++)
+            if (m_ListView.items.Count > 0)
             {
-                var item = m_ListView.items[i];
-                item.id = i;
-                root.AddChild(item);
+                for (var i = 0; i < m_ListView.items.Count; i++)
+                {
+                    var item = m_ListView.items[i];
+                    item.id = i;
+                    root.AddChild(item);
+                }
             }
 
             return root;
+        }
+
+        protected override IList<TreeViewItem> BuildRows(TreeViewItem root)
+        {
+            // 这个函数不能删掉，否则会导致不能支持空项的情况
+            IList<TreeViewItem> rows = base.BuildRows(root);
+            return rows;
         }
 
         protected override void RowGUI(RowGUIArgs args)
